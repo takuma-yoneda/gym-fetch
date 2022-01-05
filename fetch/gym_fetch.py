@@ -52,6 +52,35 @@ class GymFetchEnv(fetch_env.FetchEnv, EzPickle):
         EzPickle.__init__(self)
 
 
+class GymFetchFloorEnv(fetch_env.FetchFloorEnv, EzPickle):
+    def __init__(self, action, reward_type='sparse'):
+        initial_qpos = {
+            'robot0:slide0': 0.405,
+            'robot0:slide1': 0.48,
+            'robot0:slide2': 0.0,
+        }
+        obj_keys, goal_key = None, "robot0:grip"
+
+        gripper_extra_height = 0.2
+        target_offset = 0.0
+        obj_range = 0.15
+        target_range = 0.15
+
+        target_in_the_air = False
+        block_gripper = action in ['reach', 'slide']
+
+        local_vars = locals().copy()
+        del local_vars['action']
+        del local_vars['self']
+
+        fetch_env.FetchFloorEnv.__init__(
+            self, f"{action.replace('-', '_')}.xml",
+            n_substeps=20,
+            distance_threshold=0.05,
+            **local_vars)
+        EzPickle.__init__(self)
+
+
 if __name__ == '__main__':
     import gym
 

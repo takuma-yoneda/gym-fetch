@@ -349,3 +349,18 @@ class FetchEnv(robot_env.RobotEnv):
 
     def render(self, mode='human', width=500, height=500):
         return super(FetchEnv, self).render(mode, width, height)
+
+
+class FetchFloorEnv(FetchEnv):
+    """Special FetchEnv that samples a goal on the floor"""
+    def __init__(self, model_path, n_substeps, gripper_extra_height, block_gripper, target_in_the_air, target_offset, obj_range, target_range, distance_threshold, initial_qpos, reward_type, obj_keys, goal_key, obs_keys=None, obj_reset=None, goal_sampling=None, freeze_objects=None):
+        super().__init__(model_path, n_substeps, gripper_extra_height, block_gripper, target_in_the_air, target_offset, obj_range, target_range, distance_threshold, initial_qpos, reward_type, obj_keys, goal_key, obs_keys=obs_keys, obj_reset=obj_reset, goal_sampling=goal_sampling, freeze_objects=freeze_objects)
+
+    def _sample_goal(self):
+        """Ignore goal_key, and simply sample a goal on the floor"""
+        # TODO: Get the table height
+        # TODO: How much should the circle size be for the random sampling?? --> target_range
+
+        table_height = [0.2 + 0.2]  # You can look at box.xml > mujoco > worldbody > body.table0
+        table_goal = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.target_range, self.target_range, size=2)
+        return np.concatenate((table_goal, table_height))

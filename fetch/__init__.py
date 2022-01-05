@@ -1,6 +1,6 @@
 from gym.envs.registration import register
 
-from fetch.gym_fetch import GymFetchEnv
+from fetch.gym_fetch import GymFetchEnv, GymFetchFloorEnv
 from fetch.stack_two import StackTwo
 from fetch.no_lid import BoxNoLidEnv
 from fetch.box import BoxEnv
@@ -22,6 +22,12 @@ for action in ['reach', 'push', 'pick-place', 'slide']:
         id=f"{action.title().replace('-', '')}-v0",
         entry_point=GymFetchEnv, kwargs=dict(action=action, ), **kw)
 # Fetch
+
+# Takuma added
+register(id='Reach-floor-dense-v1',
+         entry_point=GymFetchFloorEnv,
+         kwargs=dict(action="reach", reward_type='dense'),
+         **kw)
 
 # ------------------------ Finalized ------------------------
 # Bin Environments Bin + object, no lid
