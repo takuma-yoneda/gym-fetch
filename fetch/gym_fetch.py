@@ -61,7 +61,7 @@ class GymFetchFloorEnv(fetch_env.FetchFloorEnv, EzPickle):
         }
         obj_keys, goal_key = None, "robot0:grip"
 
-        gripper_extra_height = 0.2
+        gripper_extra_height = 0.0  # Initial height of the tip
         target_offset = 0.0
         obj_range = 0.15
         target_range = 0.15
