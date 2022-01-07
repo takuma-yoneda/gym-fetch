@@ -4,7 +4,7 @@ from fetch import fetch_env
 
 
 class GymFetchEnv(fetch_env.FetchEnv, EzPickle):
-    def __init__(self, action, reward_type='sparse'):
+    def __init__(self, action, reward_type='sparse', n_substeps=20, dist_threshold=0.05):
         initial_qpos = {
             'robot0:slide0': 0.405,
             'robot0:slide1': 0.48,
@@ -46,14 +46,14 @@ class GymFetchEnv(fetch_env.FetchEnv, EzPickle):
 
         fetch_env.FetchEnv.__init__(
             self, f"{action.replace('-', '_')}.xml",
-            n_substeps=20,
-            distance_threshold=0.05,
+            n_substeps=n_substeps,
+            distance_threshold=dist_threshold,
             **local_vars)
         EzPickle.__init__(self)
 
 
 class GymFetchFloorEnv(fetch_env.FetchFloorEnv, EzPickle):
-    def __init__(self, action, reward_type='sparse'):
+    def __init__(self, action, reward_type='dense', n_substeps=20, dist_threshold=0.05):
         initial_qpos = {
             'robot0:slide0': 0.405,
             'robot0:slide1': 0.48,
@@ -75,8 +75,8 @@ class GymFetchFloorEnv(fetch_env.FetchFloorEnv, EzPickle):
 
         fetch_env.FetchFloorEnv.__init__(
             self, f"{action.replace('-', '_')}.xml",
-            n_substeps=20,
-            distance_threshold=0.05,
+            n_substeps=n_substeps,
+            distance_threshold=dist_threshold,
             **local_vars)
         EzPickle.__init__(self)
 
