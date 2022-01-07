@@ -43,6 +43,8 @@ class GymFetchEnv(fetch_env.FetchEnv, EzPickle):
         local_vars = locals().copy()
         del local_vars['action']
         del local_vars['self']
+        del local_vars['n_substeps']
+        del local_vars['dist_threshold']
 
         fetch_env.FetchEnv.__init__(
             self, f"{action.replace('-', '_')}.xml",
@@ -72,6 +74,8 @@ class GymFetchFloorEnv(fetch_env.FetchFloorEnv, EzPickle):
         local_vars = locals().copy()
         del local_vars['action']
         del local_vars['self']
+        del local_vars['n_substeps']
+        del local_vars['dist_threshold']
 
         fetch_env.FetchFloorEnv.__init__(
             self, f"{action.replace('-', '_')}.xml",
