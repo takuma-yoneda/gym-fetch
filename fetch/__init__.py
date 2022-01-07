@@ -24,9 +24,9 @@ for action in ['reach', 'push', 'pick-place', 'slide']:
 # Fetch
 
 # Takuma added
-register(id='Reach-floor-dense-v1',
+register(id='Reach-floor-v0',
          entry_point=GymFetchFloorEnv,
-         kwargs=dict(action="reach", reward_type='dense'),
+         kwargs=dict(action="reach"),
          **kw)
 
 # ------------------------ Finalized ------------------------
