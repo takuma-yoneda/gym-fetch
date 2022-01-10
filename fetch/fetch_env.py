@@ -353,8 +353,78 @@ class FetchEnv(robot_env.RobotEnv):
 
 class FetchFloorEnv(FetchEnv):
     """Special FetchEnv that samples a goal on the floor"""
-    def __init__(self, model_path, n_substeps, gripper_extra_height, block_gripper, target_in_the_air, target_offset, obj_range, target_range, distance_threshold, initial_qpos, reward_type, obj_keys, goal_key, obs_keys=None, obj_reset=None, goal_sampling=None, freeze_objects=None):
-        super().__init__(model_path, n_substeps, gripper_extra_height, block_gripper, target_in_the_air, target_offset, obj_range, target_range, distance_threshold, initial_qpos, reward_type, obj_keys, goal_key, obs_keys=obs_keys, obj_reset=obj_reset, goal_sampling=goal_sampling, freeze_objects=freeze_objects)
+
+    def __init__(
+        self,
+        model_path,
+        n_substeps,
+        gripper_extra_height,
+        block_gripper,
+        target_in_the_air,
+        target_offset,
+        obj_range,
+        target_range,
+        distance_threshold,
+        initial_qpos,
+        reward_type,
+        obj_keys,
+        goal_key,
+        obs_keys=None,
+        obj_reset=None,
+        goal_sampling=None,
+        freeze_objects=None,
+    ):
+        """Initializes a new Fetch environment.
+
+        On initialization, the objects are initialized according to the `init_qpos` dictionary.
+        We record the height info to be reused later. We then call `_reset_sim` and `_get_goal`
+        on reset.
+
+        Args:
+            model_path (string): path to the environments XML file
+            n_substeps (int): number of substeps the simulation runs on every call to step
+            gripper_extra_height (float): additional height above the table when positioning the gripper
+            block_gripper (boolean): whether or not the gripper is blocked (i.e. not movable) or not
+            target_in_the_air (float): chance for the target to be in the air above the table or on the table surface
+            target_offset (float or array with 3 elements): offset of the target
+            obj_range (float): range of a uniform distribution for sampling initial object positions
+            target_range (float): range of a uniform distribution for sampling a target
+            distance_threshold (float): the threshold after which a goal is considered achieved
+            initial_qpos (dict): a dictionary of joint names and values that define the initial configuration
+            reward_type ('sparse' or 'dense'): the reward type, i.e. sparse or dense
+        """
+        self.gripper_extra_height = gripper_extra_height
+        self.block_gripper = block_gripper
+        self.obj_keys = obj_keys or []
+        self.obj_reset = obj_reset
+        self.obs_keys = obs_keys
+        self.goal_key = goal_key
+        self.target_in_the_air = target_in_the_air
+        self.target_offset = target_offset
+        self.obj_range = obj_range
+        self.target_range = target_range
+        self.distance_threshold = distance_threshold
+        self.reward_type = reward_type
+        # add support for goal_tracking = object0@object1-top
+        self.goal_sampling = goal_sampling or {}
+        self.freeze_objects = freeze_objects or []
+
+        self.goal_offset_cache = {}
+
+        initial_qpos = assign(
+            {"robot0:slide0": 0.405, "robot0:slide1": 0.48, "robot0:slide2": 0.0},
+            initial_qpos or {},
+        )
+
+        # Does it work??
+        robot_env.RobotEnv.__init__(
+            self,
+            model_path=model_path,
+            n_substeps=n_substeps,
+            n_actions=2,
+            initial_qpos=initial_qpos,
+        )
+
 
     def _sample_goal(self):
         """Ignore goal_key, and simply sample a goal on the floor"""
@@ -364,3 +434,22 @@ class FetchFloorEnv(FetchEnv):
         table_height = [0.2 + 0.2]  # You can look at box.xml > mujoco > worldbody > body.table0
         table_goal = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.target_range, self.target_range, size=2)
         return np.concatenate((table_goal, table_height))
+
+
+    def _set_action(self, action):
+        assert action.shape == (2,)
+        action = action.copy()  # ensure that we don't change the action outside of this scope
+        pos_ctrl = np.array([action[0], action[1], 0])
+        gripper_ctrl = 1.0
+
+        pos_ctrl *= 0.05  # limit maximum change in position
+        rot_ctrl = [1., 0., 1., 0.]  # fixed rotation of the end effector, expressed as a quaternion
+        gripper_ctrl = np.array([gripper_ctrl, gripper_ctrl])
+        assert gripper_ctrl.shape == (2,)
+        if self.block_gripper:
+            gripper_ctrl = np.zeros_like(gripper_ctrl)
+        action = np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
+
+        # Apply action to simulation.
+        utils.ctrl_set_action(self.sim, action)
+        utils.mocap_set_action(self.sim, action)
