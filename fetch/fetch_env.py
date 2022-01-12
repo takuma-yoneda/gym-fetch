@@ -12,6 +12,23 @@ def assign(o, *objs):
         o.update(ob)
     return o
 
+class Pos:
+    def __init__(self, x, y) -> None:
+        self.x = x
+        self.y = y
+
+class Rect:
+    def __init__(self, center_x, center_y, width, height) -> None:
+        self.center = Pos(center_x, center_y)
+        self.width = width
+        self.height = height
+
+        # Shortcuts
+        self.min_x = self.center.x - self.width / 2
+        self.max_x = self.center.x + self.width / 2
+        self.min_y = self.center.y - self.height / 2
+        self.max_y = self.center.y + self.height / 2
+
 
 class FetchEnv(robot_env.RobotEnv):
     """Superclass for all Fetch environments.
@@ -411,6 +428,10 @@ class FetchFloorEnv(FetchEnv):
 
         self.goal_offset_cache = {}
 
+        pad = 0.03
+        self.safe_rect = Rect(1.3, 0.75,
+                              0.56 - pad, 0.56 - pad)  # TODO: load from reach.xml
+
         initial_qpos = assign(
             {"robot0:slide0": 0.405, "robot0:slide1": 0.48, "robot0:slide2": 0.0},
             initial_qpos or {},
@@ -437,19 +458,40 @@ class FetchFloorEnv(FetchEnv):
 
 
     def _set_action(self, action):
+        """Customized set_action: this restricts the action space to 2D, with gripper always closed."""
         assert action.shape == (2,)
         action = action.copy()  # ensure that we don't change the action outside of this scope
+        # pos_ctrl = np.array([action[0], action[1], 0])
         pos_ctrl = np.array([action[0], action[1], 0])
-        gripper_ctrl = 1.0
 
         pos_ctrl *= 0.05  # limit maximum change in position
         rot_ctrl = [1., 0., 1., 0.]  # fixed rotation of the end effector, expressed as a quaternion
-        gripper_ctrl = np.array([gripper_ctrl, gripper_ctrl])
+        gripper_ctrl = np.array([0, 0])
         assert gripper_ctrl.shape == (2,)
         if self.block_gripper:
             gripper_ctrl = np.zeros_like(gripper_ctrl)
         action = np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
 
+        action = self._restrict_action(action)
+
         # Apply action to simulation.
         utils.ctrl_set_action(self.sim, action)
         utils.mocap_set_action(self.sim, action)
+
+    def _restrict_action(self, action):
+        """A naive way to restrict the region the grip can move around."""
+        assert isinstance(self.goal_key, str)
+        current_tippos = self.sim.data.get_site_xpos(self.goal_key)
+        print('current tippos', current_tippos)
+        tipx, tipy, _ = current_tippos
+        if self.safe_rect.min_x > tipx:
+            action[0] = max(action[0], 0)
+        elif self.safe_rect.max_x < tipx:
+            action[0] = min(action[0], 0)
+
+        if self.safe_rect.min_y > tipy:
+            action[1] = max(action[1], 0)
+        elif self.safe_rect.max_y < tipy:
+            action[1] = min(action[1], 0)
+
+        return action
