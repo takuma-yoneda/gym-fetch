@@ -369,7 +369,10 @@ class FetchEnv(robot_env.RobotEnv):
 
 
 class FetchFloorEnv(FetchEnv):
-    """Special FetchEnv that samples a goal on the floor"""
+    """Special FetchEnv that samples a goal on the floor.
+    - action space is 2-D (x and y)
+    - gripper is always closed
+    """
 
     def __init__(
         self,
@@ -480,8 +483,8 @@ class FetchFloorEnv(FetchEnv):
 
     def _restrict_action(self, action):
         """A naive way to restrict the region the grip can move around."""
-        assert isinstance(self.goal_key, str)
-        current_tippos = self.sim.data.get_site_xpos(self.goal_key)
+        tip_key = "robot0:grip"
+        current_tippos = self.sim.data.get_site_xpos(tip_key)
         print('current tippos', current_tippos)
         tipx, tipy, _ = current_tippos
         if self.safe_rect.min_x > tipx:
