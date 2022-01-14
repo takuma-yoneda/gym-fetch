@@ -473,6 +473,8 @@ class FetchFloorEnv(FetchEnv):
         assert gripper_ctrl.shape == (2,)
         if self.block_gripper:
             gripper_ctrl = np.zeros_like(gripper_ctrl)
+        # NOTE: It seems like gripper_ctrl doesn't matter for some reason...??
+        # if you want to keep it closed, just set self.block_gripper to True.
         action = np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
 
         action = self._restrict_action(action)
