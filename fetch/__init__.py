@@ -28,6 +28,10 @@ register(id='Reach-floor-v0',
          entry_point=GymFetchFloorEnv,
          kwargs=dict(action="reach"),
          **kw)
+register(id='Push-floor-v0',
+         entry_point=GymFetchFloorEnv,
+         kwargs=dict(action="push"),
+         **kw)
 
 # ------------------------ Finalized ------------------------
 # Bin Environments Bin + object, no lid
