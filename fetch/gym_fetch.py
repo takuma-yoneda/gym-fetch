@@ -44,12 +44,10 @@ class GymFetchEnv(fetch_env.FetchEnv, EzPickle):
         del local_vars['action']
         del local_vars['self']
         del local_vars['n_substeps']
-        del local_vars['dist_threshold']
 
         fetch_env.FetchEnv.__init__(
             self, f"{action.replace('-', '_')}.xml",
             n_substeps=n_substeps,
-            distance_threshold=dist_threshold,
             **local_vars)
         EzPickle.__init__(self)
 
