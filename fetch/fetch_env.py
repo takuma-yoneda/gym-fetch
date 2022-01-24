@@ -487,7 +487,6 @@ class FetchFloorEnv(FetchEnv):
         """A naive way to restrict the region the grip can move around."""
         tip_key = "robot0:grip"
         current_tippos = self.sim.data.get_site_xpos(tip_key)
-        print('current tippos', current_tippos)
         tipx, tipy, _ = current_tippos
         if self.safe_rect.min_x > tipx:
             action[0] = max(action[0], 0)
